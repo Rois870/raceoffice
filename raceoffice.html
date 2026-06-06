@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaceOffice Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:#e8192c; --red-dim:#8c0f1a; --dark:#0a0a0c; --panel:#111116; --panel2:#18181f;
+    --border:rgba(255,255,255,0.07); --text:#e8e8ec; --muted:#6b6b7a;
+    --gold:#f0b429; --blue:#4fc3f7; --green:#4caf7d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
+  header{background:var(--panel);border-bottom:2px solid var(--red);padding:0 24px;display:flex;align-items:center;gap:16px;height:60px;position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;letter-spacing:2px;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .logo-flag{width:28px;height:18px;background:repeating-linear-gradient(90deg,#000 0 6px,#fff 6px 12px);border-radius:2px;}
+  .logo span{color:var(--red);}
+  .header-sub{font-size:12px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+  .header-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  .btn{background:var(--red);color:#fff;border:none;padding:7px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:background 0.15s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .btn:hover{background:#c0111f;}
+  .btn:disabled{background:var(--muted);cursor:not-allowed;}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .btn-outline:hover{border-color:var(--red);color:#fff;}
+  .btn-outline.notif-on{border-color:var(--green);color:var(--green);}
+  .spin{animation:spin 0.8s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .filterbar{background:var(--panel2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .filter-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .filter-pill{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:100px;font-size:13px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all 0.15s;white-space:nowrap;}
+  .filter-pill:hover{border-color:var(--red);color:#fff;}
+  .filter-pill.active{background:var(--red);border-color:var(--red);color:#fff;}
+  .filter-divider{width:1px;height:20px;background:var(--border);margin:0 4px;}
+  .search-wrap{margin-left:auto;position:relative;}
+  .search-input{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:7px 12px 7px 32px;border-radius:4px;font-size:13px;width:220px;outline:none;font-family:'Barlow',sans-serif;transition:border-color 0.15s;}
+  .search-input:focus{border-color:var(--red);}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+
+  main{padding:24px;max-width:1200px;margin:0 auto;}
+
+  /* HOSTING TIP */
+  .tip-banner{background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.25);border-radius:8px;padding:16px 20px;margin-bottom:20px;display:none;}
+  .tip-banner.show{display:block;}
+  .tip-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:8px;}
+  .tip-text{font-size:13px;color:var(--muted);line-height:1.6;}
+  .tip-text code{background:rgba(255,255,255,0.07);color:var(--text);padding:2px 6px;border-radius:3px;font-size:12px;font-family:monospace;}
+  .tip-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;margin-left:8px;}
+
+  /* PROXY STATUS */
+  .proxy-row{display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:12px;color:var(--muted);display:none;}
+  .proxy-row.show{display:flex;}
+  .pdot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .pdot.trying{background:var(--gold);animation:pulse 1s infinite;}
+  .pdot.failed{background:var(--red);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+  .notif-banner{background:rgba(76,175,125,0.1);border:1px solid rgba(76,175,125,0.3);border-radius:6px;padding:12px 18px;margin-bottom:16px;font-size:13px;color:var(--green);display:none;align-items:center;gap:12px;}
+  .notif-banner.show{display:flex;}
+  .nb-sub{font-size:11px;color:rgba(76,175,125,0.7);margin-top:2px;}
+  .notif-count{background:var(--green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;padding:2px 8px;border-radius:100px;flex-shrink:0;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px;}
+  .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
+  .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:#fff;line-height:1;}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+
+  .watched-panel{background:var(--panel);border:1px solid rgba(76,175,125,0.25);border-radius:6px;margin-bottom:20px;overflow:hidden;display:none;}
+  .watched-panel.show{display:block;}
+  .watched-header{padding:12px 18px;border-bottom:1px solid var(--border);}
+  .watched-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);}
+  .watched-item{padding:10px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+  .watched-item:last-child{border-bottom:none;}
+  .wdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .wdot.changed{background:var(--gold);}
+  .wname{flex:1;font-size:14px;color:#fff;}
+  .wdate{font-size:12px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;}
+  .wchanged{font-size:10px;color:var(--gold);background:rgba(240,180,41,0.12);padding:2px 7px;border-radius:3px;}
+  .btn-unwatch{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0 4px;line-height:1;transition:color 0.15s;}
+  .btn-unwatch:hover{color:var(--red);}
+
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:2px;color:#fff;}
+  .count-badge{background:var(--red-dim);color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:2px 8px;border-radius:100px;}
+
+  .race-grid{display:grid;gap:8px;}
+  .race-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:14px 18px;display:grid;grid-template-columns:4px 1fr auto auto;gap:0 12px;align-items:center;animation:fadeUp 0.3s ease both;transition:border-color 0.15s,background 0.15s;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .race-card:hover{border-color:rgba(232,25,44,0.35);background:#14141a;}
+  .race-card.watched{border-color:rgba(76,175,125,0.3);}
+  .race-stripe{width:4px;border-radius:4px;background:var(--red);min-height:40px;align-self:stretch;}
+  .race-stripe.today{background:var(--gold);}
+  .race-stripe.upcoming{background:var(--blue);}
+  .race-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .race-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:#fff;letter-spacing:0.5px;}
+  .race-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px;}
+  .race-org{font-size:12px;color:var(--muted);}
+  .race-type-tag{background:rgba(255,255,255,0.06);color:var(--muted);font-size:10px;padding:1px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;}
+  .live-badge{background:var(--red);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px;animation:pulse 1.5s ease-in-out infinite;text-decoration:none;}
+  .race-date-col{text-align:right;flex-shrink:0;}
+  .race-date{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;white-space:nowrap;}
+  .race-date.today{color:var(--gold);}
+  .race-date.upcoming{color:var(--blue);}
+  .multiday{font-size:11px;color:var(--muted);white-space:nowrap;}
+  .btn-watch{background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
+  .btn-watch:hover{border-color:var(--green);color:var(--green);background:rgba(76,175,125,0.1);}
+  .btn-watch.on{border-color:var(--green);color:var(--green);background:rgba(76,175,125,0.15);}
+
+  .loading-state,.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+  .loading-dots{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
+  .dot{width:10px;height:10px;background:var(--red);border-radius:50%;animation:bounce 1.2s ease-in-out infinite;}
+  .dot:nth-child(2){animation-delay:0.15s;}
+  .dot:nth-child(3){animation-delay:0.3s;}
+  @keyframes bounce{0%,80%,100%{transform:scale(0.7);opacity:0.5}40%{transform:scale(1);opacity:1}}
+  .loading-text{font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+  .loading-sub{font-size:12px;}
+  .empty-icon{font-size:48px;margin-bottom:12px;}
+  .empty-text{font-family:'Barlow Condensed',sans-serif;font-size:20px;letter-spacing:1px;text-transform:uppercase;}
+
+  .error-banner{background:rgba(232,25,44,0.1);border:1px solid rgba(232,25,44,0.3);border-radius:6px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:#ff8090;display:none;}
+
+  .toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999;pointer-events:none;}
+  .toast{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:12px 16px;font-size:13px;max-width:300px;pointer-events:auto;animation:slideIn 0.3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.5);transition:opacity 0.4s;}
+  .toast.error{border-left-color:var(--red);}
+  .toast.info{border-left-color:var(--blue);}
+  @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  .toast-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:#fff;margin-bottom:3px;}
+  .toast-body{color:var(--muted);font-size:12px;}
+
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:var(--dark);}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+  @media(max-width:600px){
+    header{padding:0 14px;}
+    .header-sub{display:none;}
+    main{padding:16px 14px;}
+    .filterbar{padding:10px 14px;}
+    .search-wrap{margin-left:0;width:100%;}
+    .search-input{width:100%;}
+    .race-card{padding:12px 12px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><div class="logo-flag"></div>Race<span>Office</span></div>
+  <div class="header-sub">Tävlingsöversikt</div>
+  <div class="header-right">
+    <div id="lastUpdated" style="font-size:11px;color:var(--muted);"></div>
+    <button class="btn btn-outline" id="notifBtn" onclick="toggleNotifications()">🔔 Notiser</button>
+    <button class="btn" id="refreshBtn" onclick="loadRaces()"><span id="rIcon">↻</span> Hämta</button>
+  </div>
+</header>
+
+<div class="filterbar">
+  <span class="filter-label">År</span>
+  <button class="filter-pill active" onclick="setYear(this,'2026')">2026</button>
+  <button class="filter-pill" onclick="setYear(this,'2025')">2025</button>
+  <button class="filter-pill" onclick="setYear(this,'2024')">2024</button>
+  <div class="filter-divider"></div>
+  <span class="filter-label">Typ</span>
+  <button class="filter-pill active" onclick="setType(this,'alla')">Alla</button>
+  <button class="filter-pill" onclick="setType(this,'folkrace')">Folkrace</button>
+  <button class="filter-pill" onclick="setType(this,'rallycross')">Rallycross</button>
+  <button class="filter-pill" onclick="setType(this,'backe')">Backe</button>
+  <button class="filter-pill" onclick="setType(this,'isracing')">IsRacing</button>
+  <button class="filter-pill" onclick="setType(this,'skoter')">Skoter</button>
+  <div class="filter-divider"></div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="searchInput" type="text" placeholder="Sök tävling eller arrangör..." oninput="renderRaces()">
+  </div>
+</div>
+
+<main>
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- Hosting-tips visas om alla proxys misslyckas -->
+  <div class="tip-banner" id="tipBanner">
+    <button class="tip-close" onclick="document.getElementById('tipBanner').classList.remove('show')">×</button>
+    <div class="tip-title">💡 Varför misslyckas hämtningen?</div>
+    <div class="tip-text">
+      Appen öppnas troligen direkt från fil (<code>file://</code>), vilket blockeras av gratis CORS-proxys.
+      Lösningarna i ordning från enklast:
+      <br><br>
+      <strong>1. Kör en lokal server</strong> (du har Python installerat?)<br>
+      <code>python -m http.server 8080</code> &nbsp;→&nbsp; öppna <code>http://localhost:8080/raceoffice.html</code>
+      <br><br>
+      <strong>2. Lägg filen på din Nginx-server (Ikka)</strong><br>
+      Kopiera filen till <code>/var/www/html/</code> och öppna via din DuckDNS-adress.
+      <br><br>
+      <strong>3. GitHub Pages</strong> — lägg filen i ett repo → Settings → Pages → gratis hostad URL.
+    </div>
+  </div>
+
+  <div class="proxy-row" id="proxyRow"><div class="pdot" id="pdot"></div><span id="pMsg"></span></div>
+
+  <div class="notif-banner" id="notifBanner">
+    <div style="font-size:20px">🔔</div>
+    <div style="flex:1"><div>Browser-notiser aktiverade</div><div class="nb-sub">Klicka 🔕 vid en tävling för att bevaka den</div></div>
+    <div class="notif-count" id="watchCount">0 bevakade</div>
+  </div>
+
+  <div class="watched-panel" id="watchedPanel">
+    <div class="watched-header"><div class="watched-title">🔔 Bevakade tävlingar</div></div>
+    <div id="watchedList"></div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="statTotal">—</div><div class="stat-label">Tävlingar</div></div>
+    <div class="stat-card"><div class="stat-val" id="statToday">—</div><div class="stat-label">Idag</div></div>
+    <div class="stat-card"><div class="stat-val" id="statUpcoming">—</div><div class="stat-label">Kommande</div></div>
+    <div class="stat-card"><div class="stat-val" id="statLive">—</div><div class="stat-label">Livesändning</div></div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">Tävlingskalender</div>
+    <div class="count-badge" id="countBadge">0</div>
+  </div>
+  <div class="race-grid" id="raceGrid">
+    <div class="loading-state">
+      <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div class="loading-text">Redo</div>
+      <div class="loading-sub">Klicka "Hämta" för att ladda tävlingar</div>
+    </div>
+  </div>
+</main>
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ─── PROXY KEDJA ───────────────────────────────────────────────
+// Dessa fungerar från localhost / hostade domäner
+const PROXIES = [
+  u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u => `https://thingproxy.freeboard.io/fetch/${u}`,
+];
+
+let proxyIdx = parseInt(localStorage.getItem('ro_pidx')||'0');
+
+async function proxyFetch(targetUrl) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    const idx = (proxyIdx + i) % PROXIES.length;
+    setProxy('trying', `Proxy ${idx+1}/${PROXIES.length}…`);
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 10000);
+      const res = await fetch(PROXIES[idx](targetUrl), { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const text = await res.text();
+      // Kolla om vi fick riktig HTML
+      if (text.length < 200) throw new Error('Tomt svar');
+      // Hantera JSON-wrapper från allorigins
+      let html = text;
+      try { const j=JSON.parse(text); if(j.contents) html=j.contents; } catch{}
+      if (!html.includes('Tävling') && !html.includes('raceoffice') && !html.includes('table')) throw new Error('Oväntad respons');
+      proxyIdx = idx;
+      localStorage.setItem('ro_pidx', idx);
+      setProxy('ok', `Ansluten via proxy ${idx+1}`);
+      return html;
+    } catch(e) {
+      console.warn(`Proxy ${idx+1} fel:`, e.message);
+    }
+  }
+  setProxy('failed', 'Alla proxys misslyckades');
+  document.getElementById('tipBanner').classList.add('show');
+  throw new Error('Alla CORS-proxys misslyckades. Se tips nedan om hur du löser det.');
+}
+
+function setProxy(state, msg) {
+  const row=document.getElementById('proxyRow');
+  const dot=document.getElementById('pdot');
+  row.classList.add('show');
+  dot.className='pdot'+(state==='trying'?' trying':state==='failed'?' failed':'');
+  document.getElementById('pMsg').textContent=msg;
+  if(state==='ok') setTimeout(()=>row.classList.remove('show'),3000);
+}
+
+// ─── STATE ────────────────────────────────────────────────────
+let allRaces=[], selYear='2026', selType='alla', notifOn=false, pollTmr=null;
+const today=new Date(); today.setHours(0,0,0,0);
+const todayStr=today.toISOString().slice(0,10);
+
+// ─── STORAGE ──────────────────────────────────────────────────
+const gW = ()=>{ try{return JSON.parse(localStorage.getItem('ro_w')||'{}')}catch{return{}} };
+const sW = o => localStorage.setItem('ro_w',JSON.stringify(o));
+const gS = ()=>{ try{return JSON.parse(localStorage.getItem('ro_s')||'{}')}catch{return{}} };
+const savS= (k,v)=>{ const s=gS(); s[k]=v; localStorage.setItem('ro_s',JSON.stringify(s)); };
+const rKey = r => (r.name+'|'+r.organizer+'|'+r.dateStart).replace(/\s+/g,'_');
+const rSnap= r => JSON.stringify({n:r.name,o:r.organizer,ds:r.dateStart,de:r.dateEnd,l:r.hasLive});
+
+// ─── NOTISER ──────────────────────────────────────────────────
+async function toggleNotifications() {
+  if(!('Notification' in window)){showToast('Stöds ej','Din webbläsare stödjer inte notiser.','error');return;}
+  if(notifOn){disableNotif();return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted') enableNotif();
+  else showToast('Blockerade','Tillåt notiser i adressfältets ikon.','error');
+}
+function enableNotif(){
+  notifOn=true; localStorage.setItem('ro_n','1');
+  document.getElementById('notifBtn').classList.add('notif-on');
+  document.getElementById('notifBtn').textContent='🔔 På';
+  document.getElementById('notifBanner').classList.add('show');
+  startPoll();
+  showToast('Notiser på','Klicka 🔕 vid en tävling för att bevaka den.');
+  updateWatched();
+}
+function disableNotif(){
+  notifOn=false; localStorage.setItem('ro_n','0');
+  document.getElementById('notifBtn').classList.remove('notif-on');
+  document.getElementById('notifBtn').textContent='🔔 Notiser';
+  document.getElementById('notifBanner').classList.remove('show');
+  stopPoll();
+  showToast('Notiser av','','info');
+}
+const startPoll=()=>{ if(!pollTmr) pollTmr=setInterval(pollWatched,5*60*1000); };
+const stopPoll =()=>{ clearInterval(pollTmr); pollTmr=null; };
+
+// ─── WATCH ────────────────────────────────────────────────────
+function toggleWatch(k) {
+  if(!notifOn){showToast('Aktivera notiser','Klicka "🔔 Notiser" i headern.','info');return;}
+  const w=gW(); const r=allRaces.find(x=>rKey(x)===k); if(!r)return;
+  if(w[k]){ delete w[k]; sW(w); showToast('Bevakning stoppad',r.name,'info'); }
+  else { w[k]={name:r.name,organizer:r.organizer,dateStart:r.dateStart,addedAt:Date.now()}; sW(w); savS(k,rSnap(r)); showToast('Bevakar nu',r.name); }
+  updateWatched(); renderRaces();
+}
+
+async function pollWatched() {
+  const w=gW(); if(!Object.keys(w).length)return;
+  try {
+    const html=await proxyFetch(`https://raceoffice.se/Home/Tavlingar?year=${selYear}`);
+    const races=parseHtml(html); const snaps=gS(); let changed=false;
+    races.forEach(r=>{ const k=rKey(r); if(!w[k])return; const ns=rSnap(r);
+      if(snaps[k]&&snaps[k]!==ns){savS(k,ns);pushNotif(r,snaps[k],ns);w[k].changed=true;changed=true;}
+      else if(!snaps[k]) savS(k,ns);
+    });
+    if(changed){sW(w);allRaces=races;renderRaces();updateWatched();}
+  } catch(e){console.warn('Poll:',e);}
+}
+
+function pushNotif(race,oldS,newS) {
+  const o=JSON.parse(oldS),n=JSON.parse(newS),chg=[];
+  if(o.ds!==n.ds||o.de!==n.de) chg.push('Datum ändrat');
+  if(!o.l&&n.l) chg.push('Livesändning tillkommen!');
+  if(o.l&&!n.l) chg.push('Livesändning borttagen');
+  if(o.n!==n.n) chg.push('Namn ändrat');
+  new Notification('🏁 '+race.name,{body:(chg.length?chg.join(' · '):'Info uppdaterad')+'\n'+race.organizer,icon:'https://raceoffice.se/images/raceofficelogo.png',tag:rKey(race)});
+}
+
+// ─── FILTER ───────────────────────────────────────────────────
+function setYear(btn,y){
+  document.querySelectorAll('.filter-pill').forEach(b=>{if(['2026','2025','2024','2023'].includes(b.textContent))b.classList.remove('active');});
+  btn.classList.add('active'); selYear=y; loadRaces();
+}
+function setType(btn,t){
+  const ps=[...document.querySelectorAll('.filter-pill')].filter(b=>['alla','folkrace','rallycross','backe','isracing','skoter'].some(x=>b.textContent.toLowerCase()===x));
+  ps.forEach(b=>b.classList.remove('active')); btn.classList.add('active'); selType=t; renderRaces();
+}
+
+// ─── LOAD ─────────────────────────────────────────────────────
+async function loadRaces(){
+  const btn=document.getElementById('refreshBtn');
+  const icon=document.getElementById('rIcon');
+  btn.disabled=true; icon.className='spin'; icon.textContent='↻';
+  showError('');
+  document.getElementById('tipBanner').classList.remove('show');
+  setGrid(`<div class="loading-state"><div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="loading-text">Hämtar…</div><div class="loading-sub">Provar proxys</div></div>`);
+  try {
+    const html=await proxyFetch(`https://raceoffice.se/Home/Tavlingar?year=${selYear}`);
+    allRaces=parseHtml(html);
+    if(!allRaces.length) throw new Error('Inga tävlingar hittades i svaret');
+    renderRaces(); updateWatched();
+    document.getElementById('lastUpdated').textContent='Uppdaterad '+new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  } catch(e){
+    showError(e.message);
+    setGrid(`<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">Kunde inte hämta data</div></div>`);
+  } finally { btn.disabled=false; icon.className=''; icon.textContent='↻'; }
+}
+
+// ─── PARSE ────────────────────────────────────────────────────
+function parseHtml(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const races=[];
+  doc.querySelectorAll('table tr').forEach(row=>{
+    const cells=row.querySelectorAll('td'); if(cells.length<3)return;
+    const name=cells[0].textContent.trim(); if(!name)return;
+    const org=cells[1].textContent.trim();
+    const dateRaw=cells[2].textContent.trim(); if(!dateRaw.match(/\d{4}/))return;
+    const liveLink=cells[3]?cells[3].querySelector('a'):null;
+    const hasLive=!!liveLink, liveUrl=liveLink?liveLink.href:'';
+    let ds=dateRaw, de='';
+    if(dateRaw.includes('→')){const p=dateRaw.split('→').map(s=>s.trim());ds=p[0];de=p[1];}
+    const c=(name+' '+org).toLowerCase();
+    let type='folkrace';
+    if(c.includes('rallycross')||c.includes('rally'))type='rallycross';
+    else if(c.includes('backe'))type='backe';
+    else if(c.includes('is')&&c.includes('rac'))type='isracing';
+    else if(c.includes('skoter'))type='skoter';
+    else if(c.includes('bilcross'))type='bilcross';
+    else if(c.includes('crosskart')||c.includes('kart'))type='crosskart';
+    else if(c.includes('super folkrace'))type='super folkrace';
+    races.push({name,organizer:org,dateStart:ds,dateEnd:de,hasLive,liveUrl,type});
+  });
+  return races;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────
+function renderRaces(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  const w=gW();
+  let f=allRaces.filter(r=>{
+    if(selType!=='alla'&&!r.type.includes(selType))return false;
+    if(q&&!r.name.toLowerCase().includes(q)&&!r.organizer.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>b.dateStart.localeCompare(a.dateStart));
+
+  const tr=allRaces.filter(r=>r.dateStart===todayStr||(r.dateEnd&&r.dateStart<=todayStr&&r.dateEnd>=todayStr));
+  const ur=allRaces.filter(r=>r.dateStart>todayStr);
+  const lr=allRaces.filter(r=>r.hasLive);
+  document.getElementById('statTotal').textContent=allRaces.length;
+  document.getElementById('statToday').textContent=tr.length;
+  document.getElementById('statUpcoming').textContent=ur.length;
+  document.getElementById('statLive').textContent=lr.length;
+  document.getElementById('countBadge').textContent=f.length;
+
+  if(!f.length){setGrid(`<div class="empty-state"><div class="empty-icon">🏁</div><div class="empty-text">Inga tävlingar hittades</div></div>`);return;}
+  document.getElementById('raceGrid').innerHTML=f.map((r,i)=>{
+    const k=rKey(r);
+    const iT=r.dateStart===todayStr||(r.dateEnd&&r.dateStart<=todayStr&&r.dateEnd>=todayStr);
+    const iU=r.dateStart>todayStr;
+    const sc=iT?'today':iU?'upcoming':'';
+    const isW=!!w[k];
+    return `<div class="race-card ${isW?'watched':''}" style="animation-delay:${Math.min(i*0.025,0.4)}s">
+      <div class="race-stripe ${sc}"></div>
+      <div class="race-info">
+        <div class="race-name">${esc(r.name)}</div>
+        <div class="race-meta">
+          <span class="race-org">${esc(r.organizer)}</span>
+          <span class="race-type-tag">${r.type}</span>
+          ${r.hasLive?`<a href="${r.liveUrl}" target="_blank" class="live-badge">● LIVE</a>`:''}
+        </div>
+      </div>
+      <div class="race-date-col">
+        <div class="race-date ${sc}">${iT?'⚡ ':''}${fd(r.dateStart)}</div>
+        ${r.dateEnd?`<div class="multiday">→ ${fd(r.dateEnd)}</div>`:''}
+      </div>
+      <button class="btn-watch ${isW?'on':''}" onclick="toggleWatch('${k}')" title="${isW?'Sluta bevaka':'Bevaka'}">${isW?'🔔':'🔕'}</button>
+    </div>`;
+  }).join('');
+}
+
+function updateWatched(){
+  const w=gW(), keys=Object.keys(w);
+  document.getElementById('watchCount').textContent=keys.length+' bevakade';
+  const panel=document.getElementById('watchedPanel'), list=document.getElementById('watchedList');
+  if(!keys.length){panel.classList.remove('show');return;}
+  panel.classList.add('show');
+  list.innerHTML=keys.map(k=>{const x=w[k];return`<div class="watched-item">
+    <div class="wdot ${x.changed?'changed':''}"></div>
+    <div class="wname">${esc(x.name)}</div>
+    <div class="wdate">${fd(x.dateStart)}</div>
+    ${x.changed?`<div class="wchanged">⚡ Ändrad</div>`:''}
+    <button class="btn-unwatch" onclick="toggleWatch('${k}')">×</button>
+  </div>`;}).join('');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────
+function fd(d){if(!d)return'';const[y,m,day]=d.split('-');return`${parseInt(day)} ${'jan feb mar apr maj jun jul aug sep okt nov dec'.split(' ')[parseInt(m)-1]} ${y}`;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showError(m){const e=document.getElementById('errorBanner');e.style.display=m?'block':'none';e.textContent=m;}
+function setGrid(h){document.getElementById('raceGrid').innerHTML=h;}
+function showToast(title,body='',type=''){
+  const c=document.getElementById('toastContainer'),t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=`<div class="toast-title">${title}</div>${body?`<div class="toast-body">${body}</div>`:''}`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},4000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+(function(){
+  if(localStorage.getItem('ro_n')==='1'&&typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    notifOn=true;
+    document.getElementById('notifBtn').classList.add('notif-on');
+    document.getElementById('notifBtn').textContent='🔔 På';
+    document.getElementById('notifBanner').classList.add('show');
+    startPoll();
+  }
+  updateWatched();
+})();
+</script>
+</body>
+</html>
