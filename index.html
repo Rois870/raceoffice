@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaceOffice Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--red:#e8192c;--dark:#0a0a0c;--panel:#111116;--panel2:#18181f;
+--border:rgba(255,255,255,0.07);--text:#e8e8ec;--muted:#6b6b7a;
+--gold:#f0b429;--blue:#4fc3f7;--green:#4caf7d;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--dark);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* HEADER */
+header{background:var(--panel);border-bottom:2px solid var(--red);padding:0 16px;display:flex;align-items:center;gap:10px;height:54px;position:sticky;top:0;z-index:200;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.logo-flag{width:22px;height:14px;background:repeating-linear-gradient(90deg,#000 0 4px,#fff 4px 9px);border-radius:2px;}
+.logo span{color:var(--red);}
+.hright{margin-left:auto;display:flex;gap:6px;align-items:center;}
+.lupd{font-size:10px;color:var(--muted);}
+.btn{background:var(--red);color:#fff;border:none;padding:6px 13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:background 0.15s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn:hover{background:#c0111f;}
+.btn:disabled{background:var(--muted);cursor:not-allowed;}
+.btn-o{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-o:hover{border-color:var(--red);color:#fff;background:transparent;}
+.btn-o.on{border-color:var(--green);color:var(--green);}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* FILTERBAR */
+.fbar{background:var(--panel2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.flbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.pill{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:100px;font-size:12px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .15s;white-space:nowrap;}
+.pill:hover{border-color:var(--red);color:#fff;}
+.pill.act{background:var(--red);border-color:var(--red);color:#fff;}
+.fdiv{width:1px;height:16px;background:var(--border);margin:0 2px;}
+.sw{width:100%;position:relative;margin-top:4px;}
+.sinp{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:7px 12px 7px 30px;border-radius:4px;font-size:13px;width:100%;outline:none;font-family:'Barlow',sans-serif;}
+.sinp:focus{border-color:var(--red);}
+.sico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none;}
+
+main{padding:14px 16px;max-width:900px;margin:0 auto;}
+
+/* SMALL BANNERS */
+.ios-w{background:rgba(240,180,41,.08);border:1px solid rgba(240,180,41,.25);border-radius:7px;padding:11px 14px;margin-bottom:12px;font-size:12px;color:var(--gold);display:none;line-height:1.55;}
+.ios-w.show{display:block;}
+.ios-w strong{display:block;margin-bottom:3px;}
+.nb{background:rgba(76,175,125,.08);border:1px solid rgba(76,175,125,.25);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green);display:none;align-items:center;gap:9px;}
+.nb.show{display:flex;}
+.nbt{font-size:10px;color:rgba(76,175,125,.65);margin-top:2px;}
+.nct{background:var(--green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;padding:1px 7px;border-radius:100px;flex-shrink:0;}
+.pr{display:none;align-items:center;gap:6px;margin-bottom:10px;font-size:10px;color:var(--muted);}
+.pr.show{display:flex;}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.pdot.t{background:var(--gold);animation:pulse 1s infinite;}
+.pdot.f{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* WATCHED */
+.wp{background:var(--panel);border:1px solid rgba(76,175,125,.2);border-radius:6px;margin-bottom:14px;overflow:hidden;display:none;}
+.wp.show{display:block;}
+.wph{padding:9px 14px;border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);}
+.wi{padding:8px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border);}
+.wi:last-child{border-bottom:none;}
+.wdot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.wdot.ch{background:var(--gold);}
+.wn{flex:1;font-size:12px;color:#fff;}
+.wd2{font-size:10px;color:var(--muted);}
+.wch{font-size:9px;color:var(--gold);background:rgba(240,180,41,.1);padding:1px 5px;border-radius:3px;}
+.buw{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:17px;padding:0 3px;line-height:1;}
+.buw:hover{color:var(--red);}
+
+/* STATS */
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px;}
+.sc{background:var(--panel);border:1px solid var(--border);border-radius:5px;padding:9px 10px;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
+.sv{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:#fff;line-height:1;}
+.sl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+.sh{display:flex;align-items:center;gap:9px;margin-bottom:11px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.st{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:2px;color:#fff;}
+.cb{background:rgba(232,25,44,.15);color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;padding:1px 7px;border-radius:100px;}
+
+/* RACE CARDS */
+.rg{display:grid;gap:6px;}
+.rc{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:11px 13px;display:grid;grid-template-columns:3px 1fr auto auto;gap:0 9px;align-items:center;animation:fu .25s ease both;transition:border-color .15s,background .15s;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+@keyframes fu{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.rc:hover,.rc:active{background:#14141a;}
+.rc.wc{border-color:rgba(76,175,125,.3);}
+.rc.ins{opacity:.55;}
+.stripe{width:3px;border-radius:3px;background:var(--red);min-height:34px;align-self:stretch;}
+.stripe.td{background:var(--gold);}
+.stripe.up{background:var(--blue);}
+.stripe.ps{background:#2a2a32;}
+.ri{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.rn{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:.3px;line-height:1.2;}
+.rm{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:3px;}
+.ro{font-size:10px;color:var(--muted);}
+.rtg{background:rgba(255,255,255,.05);color:var(--muted);font-size:8px;padding:1px 5px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif;}
+.stg{font-size:8px;padding:1px 5px;border-radius:3px;font-family:'Barlow Condensed',sans-serif;font-weight:700;}
+.stg.ko{background:rgba(240,180,41,.12);color:var(--gold);}
+.stg.ins{background:rgba(232,25,44,.12);color:var(--red);}
+.rdc{text-align:right;flex-shrink:0;}
+.rd{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;}
+.rd.td{color:var(--gold);}
+.rd.up{color:var(--blue);}
+.rd.ps{color:var(--muted);}
+.rdl{font-size:9px;color:var(--muted);white-space:nowrap;margin-top:1px;}
+.rdl.urg{color:#ff8c69;}
+.mday{font-size:9px;color:var(--muted);white-space:nowrap;}
+.bw{background:transparent;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.bw:hover{border-color:var(--green);color:var(--green);}
+.bw.on{border-color:var(--green);color:var(--green);background:rgba(76,175,125,.12);}
+
+.ls,.es{text-align:center;padding:50px 20px;color:var(--muted);}
+.ld{display:flex;gap:7px;justify-content:center;margin-bottom:12px;}
+.dot{width:8px;height:8px;background:var(--red);border-radius:50%;animation:bo 1.2s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.15s;}.dot:nth-child(3){animation-delay:.3s;}
+@keyframes bo{0%,80%,100%{transform:scale(.7);opacity:.5}40%{transform:scale(1);opacity:1}}
+.lt2{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.lsb{font-size:11px;}
+.eb{background:rgba(232,25,44,.08);border:1px solid rgba(232,25,44,.25);border-radius:6px;padding:11px 14px;margin-bottom:12px;font-size:11px;color:#ff8090;display:none;line-height:1.5;}
+
+/* ═══ DRAWER ═══ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;}
+.ov.open{opacity:1;pointer-events:all;}
+.drw{position:fixed;bottom:0;left:0;right:0;height:93vh;background:var(--panel);border-radius:16px 16px 0 0;z-index:301;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);}
+.drw.open{transform:translateY(0);}
+.dhandle{width:36px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin:10px auto 0;flex-shrink:0;}
+.dhdr{padding:10px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.dhdr-row{display:flex;align-items:flex-start;gap:8px;}
+.dtitle{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:2px;}
+.dsub{font-size:11px;color:var(--muted);}
+.dclose{background:rgba(255,255,255,.07);border:none;color:var(--muted);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+
+/* KLASS-BAR */
+.kbar{padding:8px 16px;display:flex;gap:6px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;}
+.kbar::-webkit-scrollbar{display:none;}
+.kpill{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 13px;border-radius:100px;font-size:12px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.kpill:hover{border-color:var(--blue);color:var(--blue);}
+.kpill.act{background:var(--blue);border-color:var(--blue);color:#000;}
+
+/* AUTO-REFRESH */
+.arbar{padding:7px 16px;background:var(--panel2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ardot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;}
+.ardot.live{background:var(--green);animation:pulse 1.5s infinite;}
+.ardot.loading{background:var(--gold);animation:pulse .7s infinite;}
+.arlbl{font-size:11px;color:var(--muted);flex:1;}
+.arcd{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);min-width:24px;}
+.arbtn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:3px 9px;border-radius:3px;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;transition:all .15s;}
+.arbtn:hover{border-color:var(--green);color:var(--green);}
+.arbtn.on{border-color:var(--green);color:var(--green);background:rgba(76,175,125,.1);}
+
+/* TAB-BAR */
+.tbar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{flex:1;padding:9px 4px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab:hover{color:var(--text);}
+.tab.act{color:#fff;border-bottom-color:var(--red);}
+
+/* OMGANG-BAR */
+.obar{padding:8px 16px;display:flex;gap:5px;overflow-x:auto;flex-shrink:0;background:var(--panel2);border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;}
+.obar::-webkit-scrollbar{display:none;}
+.obar.hidden{display:none;}
+.opill{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:100px;font-size:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.opill:hover{border-color:var(--gold);color:var(--gold);}
+.opill.act{background:var(--gold);border-color:var(--gold);color:#000;}
+
+/* DRAWER BODY */
+.dbody{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
+.tcont{padding:14px 16px 30px;display:none;}
+.tcont.act{display:block;}
+
+/* INFO-CARDS */
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:14px;}
+.dc{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:9px 11px;}
+.dc.full{grid-column:1/-1;}
+.dlbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px;}
+.dval{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:#fff;line-height:1.3;}
+.dval.g{color:var(--green);}
+.dval.r{color:var(--red);}
+.dval.go{color:var(--gold);}
+.dval.sm{font-size:12px;font-weight:400;}
+
+/* STARTLISTA */
+.stbl{width:100%;border-collapse:collapse;font-size:12px;}
+.stbl th{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:4px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.stbl td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.04);}
+.stbl tr:last-child td{border-bottom:none;}
+.snr{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--gold);}
+.sname{color:#fff;font-weight:500;}
+.sinfo{font-size:10px;color:var(--muted);}
+
+/* HEAT */
+.hblk{background:var(--panel2);border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden;}
+.htitle{padding:8px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);border-bottom:1px solid var(--border);}
+.hrow{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.04);}
+.hrow:last-child{border-bottom:none;}
+.hpl{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;width:22px;flex-shrink:0;text-align:center;color:var(--muted);}
+.hpl.p1{color:var(--gold);}
+.hpl.p2{color:#c0c0c0;}
+.hpl.p3{color:#cd7f32;}
+.hnr{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--blue);width:34px;flex-shrink:0;}
+.hname{flex:1;font-size:13px;color:#fff;}
+.hklb{font-size:10px;color:var(--muted);}
+.hpts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--green);flex-shrink:0;}
+.hflg{font-size:10px;color:var(--red);margin-left:3px;}
+
+/* RESULTATLISTA */
+.rtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.rtbl th{font-family:'Barlow Condensed',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:4px 6px;text-align:left;border-bottom:1px solid var(--border);}
+.rtbl td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.rtbl tr:last-child td{border-bottom:none;}
+.rpos{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;width:26px;color:var(--muted);}
+.rpos.p1{color:var(--gold);}
+.rpos.p2{color:#c0c0c0;}
+.rpos.p3{color:#cd7f32;}
+.rtot{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;color:var(--green);}
+.rfin{font-size:10px;color:var(--muted);}
+.rname2{color:#fff;font-weight:500;font-size:13px;}
+.rklb{font-size:10px;color:var(--muted);}
+
+/* DRAWER ACTIONS */
+.dact{display:flex;gap:8px;margin-bottom:14px;}
+.dab{flex:1;background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .15s;text-align:center;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;}
+.dab:hover{border-color:var(--red);color:#fff;}
+.dab.wb.on{border-color:var(--green);color:var(--green);background:rgba(76,175,125,.08);}
+
+.nodata{text-align:center;padding:30px;color:var(--muted);font-size:12px;}
+
+/* TOAST */
+.tc{position:fixed;bottom:20px;right:14px;left:14px;display:flex;flex-direction:column;gap:6px;z-index:400;pointer-events:none;}
+.toast{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:10px 13px;font-size:12px;pointer-events:auto;animation:si .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.6);transition:opacity .4s;}
+.toast.e{border-left-color:var(--red);}
+.toast.i{border-left-color:var(--blue);}
+@keyframes si{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.tt{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:#fff;margin-bottom:2px;}
+.tb{color:var(--muted);font-size:11px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-flag"></div>Race<span>Office</span></div>
+  <div class="hright">
+    <span class="lupd" id="lupd"></span>
+    <button class="btn btn-o" id="nBtn" onclick="toggleNotif()">🔔</button>
+    <button class="btn" id="fBtn" onclick="loadRaces()"><span id="fIco">↻</span> Hämta</button>
+  </div>
+</header>
+
+<div class="fbar">
+  <span class="flbl">År</span>
+  <button class="pill act" onclick="setYear(this,'2026')">2026</button>
+  <button class="pill" onclick="setYear(this,'2025')">2025</button>
+  <button class="pill" onclick="setYear(this,'2024')">2024</button>
+  <div class="fdiv"></div>
+  <span class="flbl">Typ</span>
+  <button class="pill act" onclick="setType(this,'alla')">Alla</button>
+  <button class="pill" onclick="setType(this,'Folkrace')">Folkrace</button>
+  <button class="pill" onclick="setType(this,'Rallycross')">Rallycross</button>
+  <button class="pill" onclick="setType(this,'Backe')">Backe</button>
+  <button class="pill" onclick="setType(this,'CrossKart')">CrossKart</button>
+  <div class="sw"><span class="sico">🔍</span><input class="sinp" id="sInp" type="text" placeholder="Sök tävling eller arrangör..." oninput="renderRaces()"></div>
+</div>
+
+<main>
+  <div class="eb" id="errB"></div>
+  <div class="ios-w" id="iosW"><strong>⚠️ Notiser kräver hemskärmsapp i Safari/iOS</strong>Safari → Dela → "Lägg till på hemskärmen"</div>
+  <div class="pr" id="prRow"><div class="pdot" id="pdot"></div><span id="pMsg"></span></div>
+  <div class="nb" id="nBanner">
+    <div>🔔</div>
+    <div style="flex:1"><div>Notiser på</div><div class="nbt">Tryck 🔕 vid ett race för att bevaka</div></div>
+    <div class="nct" id="nct">0</div>
+  </div>
+  <div class="wp" id="wPanel"><div class="wph">🔔 Bevakade</div><div id="wList"></div></div>
+  <div class="sr">
+    <div class="sc"><div class="sv" id="sT">—</div><div class="sl">Totalt</div></div>
+    <div class="sc"><div class="sv" id="sTd">—</div><div class="sl">Idag</div></div>
+    <div class="sc"><div class="sv" id="sU">—</div><div class="sl">Kommande</div></div>
+    <div class="sc"><div class="sv" id="sI">—</div><div class="sl">Pågår idag</div></div>
+  </div>
+  <div class="sh"><div class="st">Tävlingskalender</div><div class="cb" id="cbdg">0</div></div>
+  <div class="rg" id="rGrid">
+    <div class="ls"><div class="ld"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="lt2">Redo</div><div class="lsb">Tryck Hämta</div></div>
+  </div>
+</main>
+
+<!-- DRAWER -->
+<div class="ov" id="dOv" onclick="closeDrawer()"></div>
+<div class="drw" id="drw">
+  <div class="dhandle"></div>
+  <div class="dhdr">
+    <div class="dhdr-row">
+      <div style="flex:1">
+        <div class="dtitle" id="dTit">—</div>
+        <div class="dsub" id="dSub">—</div>
+      </div>
+      <button class="dclose" onclick="closeDrawer()">✕</button>
+    </div>
+  </div>
+  <!-- Klass-bar -->
+  <div class="kbar" id="kBar"></div>
+  <!-- Auto-refresh -->
+  <div class="arbar">
+    <div class="ardot" id="arDot"></div>
+    <span class="arlbl" id="arLbl">Live-uppdatering</span>
+    <span class="arcd" id="arCd"></span>
+    <button class="arbtn" id="arBtn" onclick="toggleAR()">Aktivera</button>
+  </div>
+  <!-- Tabs -->
+  <div class="tbar">
+    <div class="tab act" data-tab="info" onclick="switchTab('info')">Info</div>
+    <div class="tab" data-tab="start" onclick="switchTab('start')">Startlista</div>
+    <div class="tab" data-tab="heat" onclick="switchTab('heat')">Heat</div>
+    <div class="tab" data-tab="result" onclick="switchTab('result')">Ställning</div>
+  </div>
+  <!-- Omgång-bar (visas bara under Heat) -->
+  <div class="obar hidden" id="oBar"></div>
+  <!-- Body -->
+  <div class="dbody">
+    <div class="tcont act" id="tc-info"></div>
+    <div class="tcont" id="tc-start"></div>
+    <div class="tcont" id="tc-heat"></div>
+    <div class="tcont" id="tc-result"></div>
+  </div>
+</div>
+<div class="tc" id="tCont"></div>
+
+<script>
+// ── PROXYS ────────────────────────────────────────────────────
+const PROX=[
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+];
+let pidx=parseInt(localStorage.getItem('ro_p')||'0');
+
+async function pfetch(url,silent=false){
+  for(let i=0;i<PROX.length;i++){
+    const idx=(pidx+i)%PROX.length;
+    if(!silent)pstat('t',`Proxy ${idx+1}…`);
+    try{
+      const ctrl=new AbortController();
+      const t=setTimeout(()=>ctrl.abort(),10000);
+      const res=await fetch(PROX[idx](url),{signal:ctrl.signal});
+      clearTimeout(t);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const txt=await res.text();
+      if(txt.length<100)throw new Error('Tomt');
+      let html=txt;
+      try{const j=JSON.parse(txt);if(j.contents)html=j.contents;}catch{}
+      // Validera att vi fick riktig HTML
+      if(html.length<200)throw new Error('För kort');
+      pidx=idx;localStorage.setItem('ro_p',idx);
+      if(!silent)pstat('ok','');
+      return html;
+    }catch(e){console.warn(`P${idx+1}:`,e.message);}
+  }
+  if(!silent)pstat('f','Misslyckades');
+  throw new Error('Kunde inte hämta data.');
+}
+function pstat(s,m){
+  const row=document.getElementById('prRow'),dot=document.getElementById('pdot');
+  if(s==='ok'){row.classList.remove('show');return;}
+  row.classList.add('show');
+  dot.className='pdot'+(s==='t'?' t':s==='f'?' f':'');
+  document.getElementById('pMsg').textContent=m;
+}
+
+// ── GLOBALS ───────────────────────────────────────────────────
+let allRaces=[],selYear='2026',selType='alla',notifOn=false,pollTmr=null;
+// Drawer state
+let curRace=null;
+let curSlug=null;          // "Klubb-Tävling-År" slug för URL
+let curKlasser=[];         // hämtade klasser från sidan
+let curKlass=null;         // aktiv klass
+let curTab='info';
+let curOmgang='1';
+let omgangar=[];           // tillgängliga omgångar för aktiv klass
+// Auto-refresh
+let arOn=false,arTmr=null,arLeft=30;
+
+const today=new Date();today.setHours(0,0,0,0);
+const todayStr=today.toISOString().slice(0,10);
+
+// ── STORAGE ───────────────────────────────────────────────────
+const gW=()=>{try{return JSON.parse(localStorage.getItem('ro_w')||'{}')}catch{return{}}};
+const sW=o=>localStorage.setItem('ro_w',JSON.stringify(o));
+const gS=()=>{try{return JSON.parse(localStorage.getItem('ro_s')||'{}')}catch{return{}}};
+const savS=(k,v)=>{const s=gS();s[k]=v;localStorage.setItem('ro_s',JSON.stringify(s));};
+const rKey=r=>(r.name+'|'+r.organizer+'|'+r.dateStart).replace(/\s+/g,'_');
+const rSnap=r=>JSON.stringify({ds:r.dateStart,de:r.dateEnd,st:r.status,dl:r.deadline});
+
+// ── NOTISER ───────────────────────────────────────────────────
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isSA=()=>window.navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+
+async function toggleNotif(){
+  if(!('Notification'in window)){if(isIOS()&&!isSA())document.getElementById('iosW').classList.add('show');else toast('Stöds ej','','e');return;}
+  if(notifOn){offNotif();return;}
+  const p=await Notification.requestPermission();
+  if(p==='granted')onNotif();else toast('Blockerade','Tillåt notiser i inställningarna.','e');
+}
+function onNotif(){
+  notifOn=true;localStorage.setItem('ro_n','1');
+  document.getElementById('nBtn').classList.add('on');
+  document.getElementById('nBtn').textContent='🔔 På';
+  document.getElementById('nBanner').classList.add('show');
+  startPoll();toast('Notiser på');upWatched();
+}
+function offNotif(){
+  notifOn=false;localStorage.setItem('ro_n','0');
+  document.getElementById('nBtn').classList.remove('on');
+  document.getElementById('nBtn').textContent='🔔';
+  document.getElementById('nBanner').classList.remove('show');
+  stopPoll();toast('Notiser av','','i');
+}
+const startPoll=()=>{if(!pollTmr)pollTmr=setInterval(bgPoll,5*60*1000);};
+const stopPoll=()=>{clearInterval(pollTmr);pollTmr=null;};
+
+async function bgPoll(){
+  const w=gW();if(!Object.keys(w).length)return;
+  try{
+    const html=await pfetch('https://raceoffice.se/Tavlingar',true);
+    const races=parseList(html);const snaps=gS();let ch=false;
+    races.forEach(r=>{const k=rKey(r);if(!w[k])return;const ns=rSnap(r);
+      if(snaps[k]&&snaps[k]!==ns){savS(k,ns);new Notification('🏁 '+r.name,{body:'Uppdaterad info',tag:k});w[k].changed=true;ch=true;}
+      else if(!snaps[k])savS(k,ns);
+    });
+    if(ch){sW(w);allRaces=races;renderRaces();upWatched();}
+  }catch{}
+}
+
+// ── WATCH ─────────────────────────────────────────────────────
+function toggleWatch(e,k){
+  if(e){e.preventDefault();e.stopPropagation();}
+  if(!notifOn){toast('Aktivera notiser','Tryck 🔔 i headern.','i');return;}
+  const w=gW();const r=allRaces.find(x=>rKey(x)===k);if(!r)return;
+  if(w[k]){delete w[k];sW(w);toast('Bevakning stoppad',r.name,'i');}
+  else{w[k]={name:r.name,organizer:r.organizer,dateStart:r.dateStart,addedAt:Date.now()};sW(w);savS(k,rSnap(r));toast('Bevakar nu',r.name);}
+  upWatched();renderRaces();
+  // Uppdatera watch-knapp i drawer
+  const wb=document.querySelector('.dab.wb');
+  if(wb&&curRace&&rKey(curRace)===k){const isW=!!gW()[k];wb.textContent=isW?'🔔 Bevakar':'🔕 Bevaka';wb.className='dab wb'+(isW?' on':'');}
+}
+
+// ── AUTO-REFRESH ──────────────────────────────────────────────
+function toggleAR(){
+  arOn=!arOn;
+  const btn=document.getElementById('arBtn'),dot=document.getElementById('arDot'),lbl=document.getElementById('arLbl');
+  if(arOn){
+    btn.textContent='Stoppa';btn.classList.add('on');dot.classList.add('live');
+    lbl.textContent='Live · nästa om';arLeft=30;
+    document.getElementById('arCd').textContent=arLeft+'s';
+    arTmr=setInterval(()=>{arLeft--;document.getElementById('arCd').textContent=arLeft+'s';if(arLeft<=0){arLeft=30;refreshActive();}},1000);
+    refreshActive();
+  }else{
+    clearInterval(arTmr);arTmr=null;btn.textContent='Aktivera';btn.classList.remove('on');
+    dot.classList.remove('live','loading');lbl.textContent='Live-uppdatering';document.getElementById('arCd').textContent='';
+  }
+}
+async function refreshActive(){
+  if(!curSlug||!curKlass)return;
+  const dot=document.getElementById('arDot');
+  dot.classList.remove('live');dot.classList.add('loading');
+  try{
+    if(curTab==='start')await loadStart(true);
+    else if(curTab==='heat')await loadHeat(true);
+    else if(curTab==='result')await loadResult(true);
+  }catch{}
+  dot.classList.remove('loading');if(arOn)dot.classList.add('live');
+}
+
+// ── DRAWER: OPEN / CLOSE ──────────────────────────────────────
+async function openDrawer(race){
+  curRace=race;curSlug=null;curKlasser=[];curKlass=null;curTab='info';curOmgang='1';omgangar=[];
+  document.getElementById('dTit').textContent=race.name;
+  document.getElementById('dSub').textContent=race.organizer+' · '+fd(race.dateStart);
+  document.getElementById('kBar').innerHTML='<span style="color:var(--muted);font-size:11px;padding:6px 0">Hämtar klasser…</span>';
+  document.getElementById('oBar').classList.add('hidden');
+  document.getElementById('oBar').innerHTML='';
+  // Reset tabs
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('act'));
+  document.querySelector('[data-tab="info"]').classList.add('act');
+  document.querySelectorAll('.tcont').forEach(c=>c.classList.remove('act'));
+  document.getElementById('tc-info').classList.add('act');
+  document.getElementById('tc-info').innerHTML=mkLoading('Hämtar info…');
+  if(arOn)toggleAR();
+  document.getElementById('drw').classList.add('open');
+  document.getElementById('dOv').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  // Hämta inbjudan-sidan för att extrahera slug + klasser
+  try{
+    const html=await pfetch(race.url,true);
+    const doc=new DOMParser().parseFromString(html,'text/html');
+
+    // Slug från Detaljer-länk (finns på aktiva tävlingar med publicerade resultat)
+    const dl=doc.querySelector('a[href*="/Home/Detaljer/"]');
+    if(dl){const m=dl.href.match(/\/Home\/Detaljer\/([^?#"]+)/);if(m)curSlug=decodeURIComponent(m[1]).trim();}
+    // Fallback: slug från HeatIndelning-länk
+    if(!curSlug){const hl=doc.querySelector('a[href*="/Home/HeatIndelning/"]');if(hl){const m=hl.href.match(/\/Home\/HeatIndelning\/([^?#"]+)/);if(m)curSlug=decodeURIComponent(m[1]).trim();}}
+
+    // Giltiga tävlingsklasser — filtrera bort funktionärskategorier
+    const VALID_KLASSER=['Senior','Junior','Dam','Veteran','Träningsjunior','Dam/Veteran','Seniorer','Damer','Juniorer','Veteraner'];
+    const klassSet=new Set();
+
+    // Försök 1: HeatIndelning/Startlista/Resultatlista-länkar med klass=
+    doc.querySelectorAll('a[href*="HeatIndelning"], a[href*="Startlista"], a[href*="Resultatlista"]').forEach(a=>{
+      const m=a.href.match(/[?&]klass=([^&"]+)/);
+      if(m){const k=decodeURIComponent(m[1]).trim();if(k)klassSet.add(k);}
+    });
+
+    // Försök 2: klasstabell längst ner på inbjudansidan (Klass | Profilklass | Anmälda)
+    if(klassSet.size===0){
+      doc.querySelectorAll('table tr').forEach(row=>{
+        const cells=row.querySelectorAll('td');
+        if(cells.length<3)return;
+        const k=cells[0].textContent.trim();
+        // Måste vara ett känt klassnamn eller matcha mönstret
+        if(k&&k.length>1&&k.length<30&&!k.includes('Klass')&&!k.match(/\d{4}/)&&!k.match(/^(Herr|Dam,|Profilklass)/))
+          klassSet.add(k);
+      });
+    }
+
+    // Filtrera bort icke-tävlingsklasser (Chef, Domare etc.)
+    const filtered=[...klassSet].filter(k=>
+      VALID_KLASSER.some(v=>k.toLowerCase().includes(v.toLowerCase())) ||
+      k.match(/^(Senior|Junior|Dam|Veteran|Träning)/i)
+    );
+    curKlasser=filtered.length>0?filtered:(klassSet.size>0?[...klassSet]:['Senior','Junior','Dam/Veteran','Veteran']);
+
+    curKlasser=klassSet.size>0?[...klassSet]:['Senior','Junior','Dam/Veteran','Veteran'];
+    curKlass=curKlasser[0];
+    renderKBar();
+    renderInfoTab(race,html,doc);
+  }catch(e){
+    curKlasser=['Senior','Junior','Dam/Veteran','Veteran'];curKlass='Senior';
+    renderKBar();
+    document.getElementById('tc-info').innerHTML=`<div style="padding:14px">${infoFallback(race)}</div>`;
+  }
+}
+
+function closeDrawer(){
+  if(arOn)toggleAR();
+  document.getElementById('drw').classList.remove('open');
+  document.getElementById('dOv').classList.remove('open');
+  document.body.style.overflow='';
+  curRace=null;curSlug=null;
+}
+
+// Swipe ned för att stänga
+let tsY=0;
+document.getElementById('drw').addEventListener('touchstart',e=>{tsY=e.touches[0].clientY;},{passive:true});
+document.getElementById('drw').addEventListener('touchmove',e=>{
+  if(e.touches[0].clientY-tsY>80&&document.querySelector('.dbody').scrollTop===0)closeDrawer();
+},{passive:true});
+
+// ── KLASS-BAR ─────────────────────────────────────────────────
+function renderKBar(){
+  document.getElementById('kBar').innerHTML=curKlasser.map(k=>
+    `<button class="kpill ${k===curKlass?'act':''}" onclick="selKlass('${esc(k)}')">${esc(k)}</button>`
+  ).join('');
+}
+
+function selKlass(k){
+  curKlass=k;
+  // Uppdatera knappar
+  document.querySelectorAll('.kpill').forEach(b=>b.classList.toggle('act',b.textContent===k));
+  // Ladda om aktiv flik med ny klass
+  if(curTab==='start')loadStart();
+  else if(curTab==='heat'){curOmgang='1';omgangar=[];loadHeat();}
+  else if(curTab==='result')loadResult();
+}
+
+// ── TAB-SWITCH ────────────────────────────────────────────────
+function switchTab(tab){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('act',t.dataset.tab===tab));
+  document.querySelectorAll('.tcont').forEach(c=>c.classList.remove('act'));
+  document.getElementById('tc-'+tab).classList.add('act');
+  document.getElementById('oBar').classList.toggle('hidden',tab!=='heat');
+  if(tab==='start')loadStart();
+  else if(tab==='heat')loadHeat();
+  else if(tab==='result')loadResult();
+}
+
+// ── INFO-FLIK ─────────────────────────────────────────────────
+function renderInfoTab(race,html,doc){
+  const txt=doc.body.textContent||'';
+  const get=l=>{const m=txt.match(new RegExp(l+'[:\\s]+([^\\n]+)','i'));return m?m[1].trim():'';}
+  const plats=get('Tävlings plats')||get('Tävlingsplats');
+  const form=get('Tävlingsform');
+  const omf=get('Omfattning');
+  const antal=get('Planerat antal startande');
+  const sista=get('Sista anmälningsdag');
+  const anmS=txt.includes('Anmälan stängd')?'Stängd':txt.includes('Ställ mig i kö')?'Kö':txt.includes('Registrera Anmälan')?'Öppen':'';
+  const totA=txt.match(/(\d+) anmälda förare/);
+  const w=gW();const k=rKey(race);const isW=!!w[k];
+
+  // Klasser + antal anmälda
+  const kData=[];
+  doc.querySelectorAll('table tr').forEach(row=>{
+    const cells=row.querySelectorAll('td');
+    if(cells.length<3)return;
+    const kl=cells[0].textContent.trim();
+    // Antal anmälda är vanligtvis i cells[3] (index 3)
+    const an=(cells[3]||cells[2]).textContent.trim();
+    if(kl&&kl.length>1&&kl.length<30&&!kl.includes('Klass')&&!kl.match(/\d{4}/)&&an.match(/^\d/))
+      kData.push({kl,an});
+  });
+
+  document.getElementById('tc-info').innerHTML=`<div style="padding:14px 16px 30px">
+    <div class="dact">
+      <button class="dab wb ${isW?'on':''}" onclick="toggleWatch(null,'${k}')">${isW?'🔔 Bevakar':'🔕 Bevaka'}</button>
+      <a class="dab" href="${race.url}" target="_blank" rel="noopener">🔗 raceoffice.se</a>
+    </div>
+    <div class="ig">
+      <div class="dc"><div class="dlbl">Datum</div><div class="dval">${fd(race.dateStart)}${race.dateEnd?' → '+fd(race.dateEnd):''}</div></div>
+      <div class="dc"><div class="dlbl">Plats</div><div class="dval">${esc(plats||'—')}</div></div>
+      <div class="dc"><div class="dlbl">Arrangör</div><div class="dval">${esc(race.organizer)}</div></div>
+      <div class="dc"><div class="dlbl">Form</div><div class="dval">${esc(form||race.type)}</div></div>
+      ${anmS?`<div class="dc"><div class="dlbl">Anmälan</div><div class="dval ${anmS==='Öppen'?'g':anmS==='Stängd'?'r':'go'}">${anmS}${totA?' · '+totA[1]+' st':''}</div></div>`:''}
+      ${sista?`<div class="dc"><div class="dlbl">Sista anmälan</div><div class="dval sm">${esc(sista)}</div></div>`:''}
+      ${antal?`<div class="dc"><div class="dlbl">Max startande</div><div class="dval">${esc(antal)}</div></div>`:''}
+      ${omf?`<div class="dc full"><div class="dlbl">Omfattning</div><div class="dval sm">${esc(omf)}</div></div>`:''}
+    </div>
+    ${kData.length?`<div style="margin-bottom:6px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Klasser & anmälda</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+    ${kData.map(c=>`<div class="dc"><div class="dlbl">${esc(c.kl)}</div><div class="dval" style="color:var(--blue)">${esc(c.an)} st</div></div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function infoFallback(race){
+  const w=gW();const k=rKey(race);const isW=!!w[k];
+  return `<div class="dact">
+    <button class="dab wb ${isW?'on':''}" onclick="toggleWatch(null,'${k}')">${isW?'🔔 Bevakar':'🔕 Bevaka'}</button>
+    <a class="dab" href="${race.url}" target="_blank">🔗 raceoffice.se</a>
+  </div>
+  <div class="ig">
+    <div class="dc"><div class="dlbl">Datum</div><div class="dval">${fd(race.dateStart)}${race.dateEnd?' → '+fd(race.dateEnd):''}</div></div>
+    <div class="dc"><div class="dlbl">Arrangör</div><div class="dval">${esc(race.organizer)}</div></div>
+  </div>`;
+}
+
+// ── STARTLISTA ────────────────────────────────────────────────
+async function loadStart(silent=false){
+  const el=document.getElementById('tc-start');
+  if(!curSlug){el.innerHTML=`<div class="nodata">Startlista ej publicerad än — heatindelning och resultat publiceras när tävlingen startar.</div>`;return;}
+  if(!silent)el.innerHTML=mkLoading('Hämtar startlista…');
+  const url=`https://www.raceoffice.se/Home/Startlista/${curSlug}?klass=${encodeURIComponent(curKlass)}`;
+  try{
+    const html=await pfetch(url,true);
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    // Kolumner: Nr | Namn | Bil | Klubb
+    const rows=[...doc.querySelectorAll('table tr')].filter(r=>r.querySelectorAll('td').length>=2);
+    if(!rows.length){el.innerHTML=`<div class="nodata">Startlista ej publicerad än.</div>`;return;}
+    let out=`<div style="padding:14px 16px 30px"><table class="stbl">
+      <tr><th>#</th><th>Nr</th><th>Förare</th><th>Bil</th><th>Klubb</th></tr>`;
+    rows.forEach((row,i)=>{
+      const cells=row.querySelectorAll('td');
+      const nr=cells[0]?.textContent.trim()||'';
+      // Namn kan innehålla sponsor på rad 2 — ta bara första raden
+      const nameFull=cells[1]?.textContent.trim()||'';
+      const name=nameFull.split('\n')[0].trim();
+      const bil=cells[2]?.textContent.trim()||'';
+      // Klubb är cells[3], tar bort bildtext
+      const klubb=cells[3]?.textContent.trim().replace(/\s+/g,' ')||'';
+      if(!name)return;
+      out+=`<tr>
+        <td style="color:var(--muted);font-size:10px">${i+1}</td>
+        <td class="snr">${esc(nr)}</td>
+        <td class="sname">${esc(name)}</td>
+        <td class="sinfo">${esc(bil)}</td>
+        <td class="sinfo">${esc(klubb)}</td>
+      </tr>`;
+    });
+    out+=`</table></div>`;
+    el.innerHTML=out;
+  }catch(e){el.innerHTML=`<div class="nodata">Kunde inte hämta startlista.</div>`;}
+}
+
+// ── HEAT ──────────────────────────────────────────────────────
+async function loadHeat(silent=false){
+  const el=document.getElementById('tc-heat');
+  if(!curSlug){el.innerHTML=`<div class="nodata">Heatindelning publiceras när tävlingen startar.</div>`;return;}
+  if(!silent)el.innerHTML=mkLoading('Hämtar heat…');
+  const url=`https://www.raceoffice.se/Home/HeatIndelning/${curSlug}?omgang=${encodeURIComponent(curOmgang)}&klass=${encodeURIComponent(curKlass)}`;
+  try{
+    const html=await pfetch(url,true);
+    const doc=new DOMParser().parseFromString(html,'text/html');
+
+    // Hämta tillgängliga omgångar från nav-länkarna på sidan
+    const newOmgar=[];
+    doc.querySelectorAll('a[href*="omgang="]').forEach(a=>{
+      const m=a.href.match(/[?&]omgang=([^&"]+)/);
+      if(m){const o=decodeURIComponent(m[1]).trim();if(o&&!newOmgar.includes(o))newOmgar.push(o);}
+    });
+    if(newOmgar.length>0){omgangar=newOmgar;}
+    renderOmgBar();
+    parseAndShowHeat(doc,el);
+  }catch(e){el.innerHTML=`<div class="nodata">Kunde inte hämta heat. Kontrollera att tävlingen har startat.</div>`;}
+}
+
+function renderOmgBar(){
+  const bar=document.getElementById('oBar');
+  if(!omgangar.length){bar.classList.add('hidden');return;}
+  bar.classList.remove('hidden');
+  bar.innerHTML=omgangar.map(o=>`<button class="opill ${o===curOmgang?'act':''}" onclick="selOmg('${esc(o)}')">${o==='Finaler'?'🏆 Final':'Omg '+esc(o)}</button>`).join('');
+}
+
+async function selOmg(o){
+  curOmgang=o;
+  document.querySelectorAll('.opill').forEach(b=>b.classList.toggle('act',b.textContent.replace('🏆 ','')===o||b.textContent===`Omg ${o}`));
+  const el=document.getElementById('tc-heat');
+  el.innerHTML=mkLoading('Hämtar omgång…');
+  const url=`https://www.raceoffice.se/Home/HeatIndelning/${curSlug}?omgang=${encodeURIComponent(o)}&klass=${encodeURIComponent(curKlass)}`;
+  try{
+    const html=await pfetch(url,true);
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    parseAndShowHeat(doc,el);
+  }catch{el.innerHTML=`<div class="nodata">Kunde inte hämta omgång.</div>`;}
+}
+
+function parseAndShowHeat(doc,el){
+  // Struktur: h4/h5 med heatnamn, sedan tabellrader med placering+nr+namn+bil+poäng
+  const blocks=[];
+  let cur=null;
+  // Gå igenom alla element i ordning
+  [...doc.body.children].forEach(function walk(node){
+    if(node.tagName&&node.tagName.match(/^H[1-6]$/)){
+      const t=node.textContent.trim();
+      // Heatrubriker ser ut som "Senior - 1", "Omg:1" etc.
+      if(t.match(/(Senior|Junior|Dam|Veteran|Seniorer|Klass|Omg)/i)||t.match(/\w+\s*[-–]\s*\d+/)){
+        if(cur&&cur.rows.length)blocks.push(cur);
+        cur={title:t,rows:[]};
+      }
+    }else if(node.tagName==='TABLE'&&cur){
+      node.querySelectorAll('tr').forEach(row=>{
+        const cells=row.querySelectorAll('td');
+        if(cells.length<3)return;
+        // Extrahera placering, startnr, namn, klub, poäng från hela radens text
+        const fullTxt=row.textContent;
+        const pl=cells[0]?.textContent.trim();
+        const nr=cells[1]?.textContent.trim();
+        const name=cells[2]?.textContent.trim().split('\n')[0].trim();
+        const extra=cells[3]?.textContent.trim()||'';
+        const ptsM=fullTxt.match(/Poäng:\s*\*{0,2}(\d+)\*{0,2}/);
+        const pts=ptsM?ptsM[1]:'';
+        const flags=(fullTxt.match(/\b(DNF|DNS|DQ|V\b|J\b|T\b)/g)||[]).filter((v,i,a)=>a.indexOf(v)===i);
+        if(name&&name.length>1)cur.rows.push({pl,nr,name,extra,pts,flags});
+      });
+    }else if(node.children){[...node.children].forEach(walk);}
+  });
+  if(cur&&cur.rows.length)blocks.push(cur);
+
+  if(!blocks.length){el.innerHTML=`<div class="nodata">Inga heat publicerade ännu för ${curKlass}.</div>`;return;}
+  el.innerHTML=`<div style="padding:10px 16px 30px">`+blocks.map(b=>`
+    <div class="hblk">
+      <div class="htitle">🏁 ${esc(b.title)}</div>
+      ${b.rows.map(r=>`<div class="hrow">
+        <div class="hpl ${r.pl==='1'?'p1':r.pl==='2'?'p2':r.pl==='3'?'p3':''}">${esc(r.pl||'—')}</div>
+        <div class="hnr">${esc(r.nr||'')}</div>
+        <div style="flex:1"><div class="hname">${esc(r.name)}</div>${r.extra?`<div class="hklb">${esc(r.extra)}</div>`:''}</div>
+        ${r.pts?`<div class="hpts">${esc(r.pts)}p</div>`:''}
+        ${r.flags.length?`<span class="hflg">${r.flags.join(' ')}</span>`:''}
+      </div>`).join('')}
+    </div>`).join('')+`</div>`;
+}
+
+// ── RESULTATLISTA ─────────────────────────────────────────────
+async function loadResult(silent=false){
+  const el=document.getElementById('tc-result');
+  if(!curSlug){el.innerHTML=`<div class="nodata">Ställning publiceras efter att heat körts.</div>`;return;}
+  if(!silent)el.innerHTML=mkLoading('Hämtar ställning…');
+  const url=`https://www.raceoffice.se/Home/Resultatlista/${curSlug}?klass=${encodeURIComponent(curKlass)}`;
+  try{
+    const html=await pfetch(url,true);
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const rows=[...doc.querySelectorAll('table tr')].filter(r=>r.querySelectorAll('td').length>=4);
+    if(!rows.length){el.innerHTML=`<div class="nodata">Inga resultat publicerade ännu för ${curKlass}.</div>`;return;}
+
+    let out=`<div style="padding:14px 16px 30px"><table class="rtbl">
+      <tr><th>Pos</th><th>Nr</th><th>Förare</th><th>Poäng</th><th>Finaler</th></tr>`;
+    rows.forEach(row=>{
+      const cells=row.querySelectorAll('td');
+      if(cells.length<4)return;
+      const pos=cells[0]?.textContent.trim();
+      const nr=cells[1]?.textContent.trim();
+      // cells[2] innehåller "Namn Klubb Bil poäng-per-omg"
+      const cell2txt=cells[2]?.textContent.trim()||'';
+      const lines=cell2txt.split(/\n|\s{3,}/).map(s=>s.trim()).filter(Boolean);
+      const name=lines[0]||'';
+      const klubb=lines[1]||'';
+      // Total poäng är cells[3] eller cells som innehåller totalen
+      // I resultatlistan: Pos | Nr | Namncell (stor) | Omg1 | Omg2 | Omg3 | Tot | C | B | A
+      const tot=cells[cells.length-4]?.textContent.trim()||cells[3]?.textContent.trim();
+      const afin=cells[cells.length-1]?.textContent.trim();
+      const bfin=cells[cells.length-2]?.textContent.trim();
+      const cfin=cells[cells.length-3]?.textContent.trim();
+      if(!pos||!name)return;
+      const pc=pos==='1'?'p1':pos==='2'?'p2':pos==='3'?'p3':'';
+      out+=`<tr>
+        <td class="rpos ${pc}">${esc(pos)}</td>
+        <td class="snr">${esc(nr)}</td>
+        <td><div class="rname2">${esc(name)}</div><div class="rklb">${esc(klubb)}</div></td>
+        <td class="rtot">${esc(tot)}</td>
+        <td class="rfin">${[cfin,bfin,afin].filter(f=>f&&f.match(/\d|DNS|DNF/)).join(' ')}</td>
+      </tr>`;
+    });
+    out+=`</table></div>`;
+    el.innerHTML=out;
+  }catch(e){el.innerHTML=`<div class="nodata">Kunde inte hämta ställning.</div>`;}
+}
+
+// ── RACE-LISTA ────────────────────────────────────────────────
+async function loadRaces(){
+  const btn=document.getElementById('fBtn'),ico=document.getElementById('fIco');
+  btn.disabled=true;ico.className='spin';showErr('');
+  setGrid(mkLoading('Hämtar…'));
+  try{
+    const html=await pfetch('https://raceoffice.se/Tavlingar');
+    allRaces=parseList(html);
+    if(!allRaces.length)throw new Error('Inga tävlingar hittades');
+    renderRaces();upWatched();
+    document.getElementById('lupd').textContent=new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){showErr(e.message);setGrid(`<div class="es"><div style="font-size:36px;margin-bottom:9px">⚠️</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;text-transform:uppercase">Kunde inte hämta</div></div>`);}
+  finally{btn.disabled=false;ico.className='';}
+}
+
+function parseList(html){
+  const doc=new DOMParser().parseFromString(html,'text/html');const races=[];
+  doc.querySelectorAll('table tr').forEach(row=>{
+    const cells=row.querySelectorAll('td');if(cells.length<3)return;
+    const dateRaw=cells[0].textContent.trim();if(!dateRaw.match(/\d{4}/))return;
+    let ds=dateRaw,de='';
+    if(dateRaw.includes('→')){const p=dateRaw.split('→').map(s=>s.trim());ds=p[0];de=p[1];}
+    let linkEl=null;
+    for(let ci=1;ci<cells.length;ci++){const a=cells[ci].querySelector('a[href*="Inbjudan"]');if(a){linkEl=a;break;}}
+    if(!linkEl)return;
+    const name=linkEl.textContent.trim();if(!name)return;
+    const href=linkEl.getAttribute('href')||'';
+    const url=href.startsWith('http')?href:'https://raceoffice.se'+href;
+    const last=cells[cells.length-1].textContent.trim();
+    const typeM=last.match(/(Folkrace|Rallycross|Backe|CrossKart|Skoter|BilCross|Super Folkrace)/i);
+    const type=typeM?typeM[1]:'Folkrace';
+    const dlM=last.match(/(\d{4}-\d{2}-\d{2})/);
+    const deadline=dlM?dlM[1]:'';
+    const status=last.includes('Inställd')?'Inställd':last.includes('Kö')?'Kö':'';
+    let org='';
+    for(let ci=1;ci<cells.length;ci++){
+      const t=cells[ci].textContent.trim();
+      if(!t||cells[ci].querySelector('a[href*="Inbjudan"]')||cells[ci].querySelector('a[href*="Serietabell"]'))continue;
+      if(t.match(/\d{4}-\d{2}-\d{2}/)||t.match(/(Folkrace|Rallycross|Backe|CrossKart|Inställd|Kö)/i))continue;
+      if(t.length>2&&t.length<60){org=t;break;}
+    }
+    races.push({name,organizer:org,dateStart:ds,dateEnd:de,url,type,deadline,status});
+  });
+  return races;
+}
+
+function renderRaces(){
+  const q=document.getElementById('sInp').value.toLowerCase().trim();
+  const w=gW();
+  let f=allRaces.filter(r=>{
+    if(selType!=='alla'&&r.type.toLowerCase()!==selType.toLowerCase())return false;
+    if(q&&!r.name.toLowerCase().includes(q)&&!r.organizer.toLowerCase().includes(q))return false;
+    return true;
+  });
+  f.sort((a,b)=>{
+    const at=a.dateStart===todayStr?0:a.dateStart>todayStr?1:2;
+    const bt=b.dateStart===todayStr?0:b.dateStart>todayStr?1:2;
+    if(at!==bt)return at-bt;
+    return at===1?a.dateStart.localeCompare(b.dateStart):b.dateStart.localeCompare(a.dateStart);
+  });
+  const tr=allRaces.filter(r=>r.dateStart===todayStr||(r.dateEnd&&r.dateStart<=todayStr&&r.dateEnd>=todayStr));
+  const ur=allRaces.filter(r=>r.dateStart>todayStr);
+  document.getElementById('sT').textContent=allRaces.length;
+  document.getElementById('sTd').textContent=tr.length;
+  document.getElementById('sU').textContent=ur.length;
+  document.getElementById('sI').textContent=tr.length;
+  document.getElementById('cbdg').textContent=f.length;
+  if(!f.length){setGrid(`<div class="es"><div style="font-size:36px;margin-bottom:9px">🏁</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;text-transform:uppercase">Inga hittades</div></div>`);return;}
+  const dTo=d=>{if(!d)return null;return Math.ceil((new Date(d)-today)/86400000);};
+  document.getElementById('rGrid').innerHTML=f.map((r,i)=>{
+    const k=rKey(r);
+    const iT=r.dateStart===todayStr||(r.dateEnd&&r.dateStart<=todayStr&&r.dateEnd>=todayStr);
+    const iU=r.dateStart>todayStr;
+    const sc=iT?'td':iU?'up':'ps';
+    const isW=!!w[k];
+    const dl=dTo(r.deadline);
+    let dlH='';
+    if(r.deadline&&iU){
+      if(dl<0)dlH=`<div class="rdl">Anm. stängd</div>`;
+      else if(dl===0)dlH=`<div class="rdl urg">Anm. stänger idag!</div>`;
+      else if(dl<=3)dlH=`<div class="rdl urg">Anm. om ${dl}d</div>`;
+      else dlH=`<div class="rdl">Anm. ${fd(r.deadline)}</div>`;
+    }
+    return `<div class="rc ${isW?'wc':''} ${r.status==='Inställd'?'ins':''}" onclick="openDrawer(allRaces[${allRaces.indexOf(r)}])" style="animation-delay:${Math.min(i*.02,.3)}s">
+      <div class="stripe ${sc}"></div>
+      <div class="ri">
+        <div class="rn">${esc(r.name)}</div>
+        <div class="rm">
+          <span class="ro">${esc(r.organizer)}</span>
+          <span class="rtg">${r.type}</span>
+          ${r.status==='Inställd'?'<span class="stg ins">INSTÄLLD</span>':''}
+          ${r.status==='Kö'?'<span class="stg ko">KÖ</span>':''}
+        </div>
+      </div>
+      <div class="rdc">
+        <div class="rd ${sc}">${iT?'⚡ ':''}${fd(r.dateStart)}</div>
+        ${r.dateEnd?`<div class="mday">→ ${fd(r.dateEnd)}</div>`:''}
+        ${dlH}
+      </div>
+      <button class="bw ${isW?'on':''}" onclick="toggleWatch(event,'${k}')">${isW?'🔔':'🔕'}</button>
+    </div>`;
+  }).join('');
+}
+
+function upWatched(){
+  const w=gW(),keys=Object.keys(w);
+  document.getElementById('nct').textContent=keys.length;
+  const panel=document.getElementById('wPanel'),list=document.getElementById('wList');
+  if(!keys.length){panel.classList.remove('show');return;}
+  panel.classList.add('show');
+  list.innerHTML=keys.map(k=>{const x=w[k];return`<div class="wi">
+    <div class="wdot ${x.changed?'ch':''}"></div>
+    <div class="wn">${esc(x.name)}</div>
+    <div class="wd2">${fd(x.dateStart)}</div>
+    ${x.changed?'<div class="wch">⚡</div>':''}
+    <button class="buw" onclick="toggleWatch(event,'${k}')">×</button>
+  </div>`;}).join('');
+}
+
+function setYear(btn,y){
+  document.querySelectorAll('.pill').forEach(b=>{if(['2026','2025','2024','2023'].includes(b.textContent))b.classList.remove('act');});
+  btn.classList.add('act');selYear=y;loadRaces();
+}
+function setType(btn,t){
+  [...document.querySelectorAll('.pill')].filter(b=>['alla','folkrace','rallycross','backe','crosskart'].some(x=>b.textContent.toLowerCase()===x)).forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');selType=t;renderRaces();
+}
+
+// ── UTILS ────────────────────────────────────────────────────
+function fd(d){if(!d)return'';const[y,m,day]=d.split('-');return`${parseInt(day)} ${'jan feb mar apr maj jun jul aug sep okt nov dec'.split(' ')[parseInt(m)-1]}`;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showErr(m){const e=document.getElementById('errB');e.style.display=m?'block':'none';e.textContent=m;}
+function setGrid(h){document.getElementById('rGrid').innerHTML=h;}
+function mkLoading(t){return`<div class="ls"><div class="ld"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="lt2">${t}</div></div>`;}
+function toast(title,body='',type=''){
+  const c=document.getElementById('tCont'),t=document.createElement('div');
+  t.className='toast '+(type==='e'?'e':type==='i'?'i':'');
+  t.innerHTML=`<div class="tt">${title}</div>${body?`<div class="tb">${body}</div>`:''}`;
+  c.appendChild(t);setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),400);},3500);
+}
+
+// ── INIT ────────────────────────────────────────────────────
+(function(){
+  if(localStorage.getItem('ro_n')==='1'&&typeof Notification!=='undefined'&&Notification.permission==='granted'){
+    notifOn=true;document.getElementById('nBtn').classList.add('on');document.getElementById('nBtn').textContent='🔔 På';
+    document.getElementById('nBanner').classList.add('show');startPoll();
+  }
+  upWatched();
+})();
+</script>
+</body>
+</html>
